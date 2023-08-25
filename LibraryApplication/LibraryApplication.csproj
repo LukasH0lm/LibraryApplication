@@ -7,6 +7,7 @@
         <UseWPF>true</UseWPF>
     </PropertyGroup>
 
+
     <ItemGroup>
       <Folder Include="Books\" />
     </ItemGroup>

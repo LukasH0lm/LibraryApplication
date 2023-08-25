@@ -5,42 +5,40 @@ namespace LibraryApplication;
 
 public class Book
 {
-    
-    public int id { get; set; }
+    public int Id { get; set; }
     public string Title { get; set; }
     public string Author { get; set; }
-    public string publisher { get; set; }
+    public string Publisher { get; set; }
     public int Year { get; set; }
-    public string isbn { get; set; }
-    public string description { get; set; }
-    public string category { get; set; }
-    
-    public bool isAvailable { get; set; }
+    public string Isbn { get; set; }
+    public string Description { get; set; }
+    public string Category { get; set; }
+
+    public bool IsAvailable { get; set; }
 
 
-    public Book(int id, string title, string author, string publisher, int year, string isbn, string description, string category)
+    public Book(int id, string title, string author, string publisher, int year, string isbn, string description,
+        string category)
     {
-        this.id = id;
+        Id = title.GetHashCode(); //is this best practice? change of collision?
         Title = title;
         Author = author;
-        this.publisher = publisher;
+        Publisher = publisher;
         Year = year;
-        this.isbn = isbn;
-        this.description = description;
-        this.category = category;
+        Isbn = isbn;
+        Description = description;
+        Category = category;
+        IsAvailable = true;
     }
 
-    
+
     public void AddToLibrary()
     {
-        string jsonString = JsonSerializer.Serialize(this);
-        string fileName = this.Title + ".json"; 
         string path = @"C:\Users\lukas\RiderProjects\LibraryApplication\LibraryApplication\Books\";
-        File.WriteAllText(path + fileName, jsonString);
-        
-        
+        string jsonString = JsonSerializer.Serialize(this);
+        File.WriteAllText(path + Title + ".json", jsonString);
     }
-    
+
 
     public override string ToString()
     {

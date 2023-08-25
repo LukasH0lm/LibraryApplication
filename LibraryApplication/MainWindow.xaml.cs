@@ -28,10 +28,12 @@ namespace LibraryApplication
         {
             InitializeComponent();
 
-            //SerializeAllBooks(); // for testing purposes
+            SerializeAllBooks(); // for testing purposes
 
             SetLvBooksList(State.All);
         }
+
+        private Book currentBook = null;
 
 
         private void SetLvBooksList(State state)
@@ -61,6 +63,11 @@ namespace LibraryApplication
                 Book book = JsonSerializer.Deserialize<Book>(json);
 
                 books.Add(book);
+            }
+
+            foreach (var book in books)
+            {
+                Console.Out.WriteLine(book);
             }
 
             LvBooks.ItemsSource = books;
@@ -96,15 +103,15 @@ namespace LibraryApplication
             {
                 if (listView.SelectedItem is Book book)
                 {
-                    /*
+                    currentBook = book;
+
                     TxtBookTitle.Text = book.Title;
                     TxtBookAuthor.Text = book.Author;
-                    TxtBookPublisher.Text = book.publisher;
+                    TxtBookPublisher.Text = book.Publisher;
                     TxtBookYear.Text = book.Year.ToString();
-                    TxtBookIsbn.Text = book.isbn;
-                    TxtBookDescription.Text = book.description;
-                    TxtBookCategory.Text = book.category;
-                    */
+                    TxtBookIsbn.Text = book.Isbn;
+                    TxtBookDescription.Text = book.Description;
+                    TxtBookCategory.Text = book.Category;
                 }
             }
         }
@@ -179,6 +186,57 @@ namespace LibraryApplication
                 "The Hobbit, or There and Back Again is a children's fantasy novel by English author J. R. R. Tolkien. It was published on 21 September 1937 to wide critical acclaim, being nominated for the Carnegie Medal and awarded a prize from the New York Herald Tribune for best juvenile fiction.",
                 "Fantasy");
             book.AddToLibrary();
+        }
+
+
+        private void NewBookMenuItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            BookEditor bookEditor = new BookEditor(BookState.New, null);
+
+            bookEditor.ShowDialog();
+        }
+
+        private void EditBookMenuItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (currentBook == null)
+            {
+                MessageBox.Show("Please select a book first!");
+                return;
+            }
+
+            BookEditor bookEditor = new BookEditor(BookState.Edit, currentBook);
+
+            bookEditor.ShowDialog();
+        }
+
+        private void DeleteBookMenuItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (currentBook == null)
+            {
+                MessageBox.Show("Please select a book first!");
+                return;
+            }
+
+            //delete book.json file
+            string path = @"C:\Users\lukas\RiderProjects\LibraryApplication\LibraryApplication\Books\";
+            string fileName = currentBook.Title + ".json";
+            File.Delete(path + fileName);
+
+            //refresh listview
+            string state = CmbBooks.SelectedItem.ToString().Split(new string[] { ": " }, StringSplitOptions.None)
+                .Last();
+            if (state == "1")
+            {
+                SetLvBooksList(State.All);
+            }
+            else if (state == "2")
+            {
+                SetLvBooksList(State.Available);
+            }
+            else if (state == "3")
+            {
+                SetLvBooksList(State.Loaned);
+            }
         }
     }
 }
