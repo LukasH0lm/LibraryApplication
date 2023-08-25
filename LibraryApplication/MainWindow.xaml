@@ -22,18 +22,18 @@
         
         
        
-        <Button Grid.Column="0" Name="Button" HorizontalAlignment="Left"  >
-            hello world
+        <Button Name="BtnLoan" Grid.Column="0"  HorizontalAlignment="Left"  >
+            Loan
         </Button>
         
-        <ComboBox Grid.Column="2" Grid.Row="0" Width="150" Margin="10" HorizontalAlignment="Left" >
+        <ComboBox Name="CmbBooks" SelectionChanged="CmbBooks_OnSelectionChanged" Grid.Column="2" Grid.Row="0" Width="150" Margin="10" HorizontalAlignment="Left" >
             <ComboBoxItem IsSelected="True"> All Books</ComboBoxItem>
             <ComboBoxItem >Available Books</ComboBoxItem>
             <ComboBoxItem >Loaned to user</ComboBoxItem>
         </ComboBox>
         
         
-        <ListView Grid.Column="2" Grid.Row="2" Margin="10" Name="lvBooks" HorizontalAlignment="Left">
+        <ListView Name = "LvBooks" Grid.Column="2" Grid.Row="2" Margin="10" HorizontalAlignment="Left" SelectionChanged="LvBooks_OnSelectionChanged">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Title" Width="auto" DisplayMemberBinding="{Binding Title}" />

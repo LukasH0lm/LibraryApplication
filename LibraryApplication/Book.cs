@@ -1,4 +1,7 @@
-﻿namespace LibraryApplication;
+﻿using System.IO;
+using System.Text.Json;
+
+namespace LibraryApplication;
 
 public class Book
 {
@@ -11,6 +14,8 @@ public class Book
     public string isbn { get; set; }
     public string description { get; set; }
     public string category { get; set; }
+    
+    public bool isAvailable { get; set; }
 
 
     public Book(int id, string title, string author, string publisher, int year, string isbn, string description, string category)
@@ -25,6 +30,17 @@ public class Book
         this.category = category;
     }
 
+    
+    public void AddToLibrary()
+    {
+        string jsonString = JsonSerializer.Serialize(this);
+        string fileName = this.Title + ".json"; 
+        string path = @"C:\Users\lukas\RiderProjects\LibraryApplication\LibraryApplication\Books\";
+        File.WriteAllText(path + fileName, jsonString);
+        
+        
+    }
+    
 
     public override string ToString()
     {
