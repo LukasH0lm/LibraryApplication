@@ -16,6 +16,25 @@ public class Book
 
     public bool IsAvailable { get; set; }
 
+    public Customer? LoanedTo { get; set; }
+
+    public Book(int id, string title, string author, string publisher, int year, string isbn, string description,
+        string category, bool isAvailable, Customer loanedTo)
+    {
+        Id = title.GetHashCode(); //is this best practice? chance of collision?
+        Title = title;
+        Author = author;
+        Publisher = publisher;
+        Year = year;
+        Isbn = isbn; //TODO: check if isbn is valid, could be used as a key
+        Description = description;
+        Category = category;
+        IsAvailable = isAvailable;
+        LoanedTo = loanedTo;
+    }
+
+
+    //new book constructor
 
     public Book(int id, string title, string author, string publisher, int year, string isbn, string description,
         string category)
@@ -29,6 +48,11 @@ public class Book
         Description = description;
         Category = category;
         IsAvailable = true;
+        LoanedTo = null;
+    }
+
+    public Book()
+    {
     }
 
 
@@ -43,5 +67,11 @@ public class Book
     public override string ToString()
     {
         return $"{Title} - {Author} ";
+    }
+
+    public void RemoveFromLibrary()
+    {
+        string path = @"C:\Users\lukas\RiderProjects\LibraryApplication\LibraryApplication\Books\";
+        File.Delete(path + Title + ".json");
     }
 }

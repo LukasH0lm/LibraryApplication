@@ -6,7 +6,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:LibraryApplication"
         mc:Ignorable="d"
         Title="MainWindow" Height="400" Width="750">
    
@@ -19,9 +18,9 @@
                 <MenuItem Header="_Delete" Click="DeleteBookMenuItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="User"> 
-                <MenuItem Header="_New"/>
-                <MenuItem Header="_Edit"/>
-                <MenuItem Header="_Delete"/>
+                <MenuItem Header="_New" Click="NewCustomerMenuItem_OnClick"/>
+                <MenuItem Header="_Edit" Click="EditCustomerMenuItem_OnClick"/>
+                <MenuItem Header="_Delete" Click="DeleteCustomerMenuItem_OnClick"/>
             </MenuItem>
         </Menu>
         <StackPanel />
@@ -32,16 +31,25 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200" />
             <ColumnDefinition Width="200" />
-            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
-            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
 
         </Grid.RowDefinitions>
 
-        
+            <ListView Name="LvCustomers" Grid.Column="0" Grid.Row="0" Margin="10" HorizontalAlignment="Left"
+                      SelectionChanged="LvCustomers_OnSelectionChanged">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Id" Width="auto" DisplayMemberBinding="{Binding Id}" />
+                        <GridViewColumn Header="FirstName" Width="auto" DisplayMemberBinding="{Binding FirstName}" />
+                        <GridViewColumn Header="LastName" Width="auto" DisplayMemberBinding="{Binding LastName}" />
+                    </GridView>
+                </ListView.View>
+            </ListView>
         
         
         
@@ -92,15 +100,25 @@
         </Grid>
 
 
-        <ComboBox Name="CmbBooks" SelectionChanged="CmbBooks_OnSelectionChanged" Grid.Column="2" Grid.Row="0"
+        <ComboBox Name="CmbBooks" SelectionChanged="CmbBooks_OnSelectionChanged" Height="20" Grid.Column="2" Grid.Row="0"
                   Width="150" Margin="10" HorizontalAlignment="Left">
             <ComboBoxItem IsSelected="True"> All Books</ComboBoxItem>
             <ComboBoxItem>Available Books</ComboBoxItem>
             <ComboBoxItem>Loaned to user</ComboBoxItem>
         </ComboBox>
+            
+        <Button Name="BtnLoan" Grid.Column="2" Grid.Row="0" Width="auto" Height="20" Margin="200 10 10 10" HorizontalAlignment="Center"
+                Click="BtnLoan_OnClick">
+            Loan
+        </Button>
+            
+        <Button Name="BtnReturn" Grid.Column="2" Grid.Row="0" Width="auto" Height="20" Margin="10" HorizontalAlignment="Right"
+                Click="BtnReturn_OnClick">
+            Return
+        </Button>
 
 
-        <ListView Name="LvBooks" Grid.Column="2" Grid.Row="2" Margin="10" HorizontalAlignment="Left"
+        <ListView Name="LvBooks" Grid.Column="2" Grid.Row="2" Margin="10" HorizontalAlignment="Right"
                   SelectionChanged="LvBooks_OnSelectionChanged">
             <ListView.View>
                 <GridView>

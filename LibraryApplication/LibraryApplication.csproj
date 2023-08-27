@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <Folder Include="Books\" />
+        <Folder Include="Customers\"/>
     </ItemGroup>
 
 </Project>

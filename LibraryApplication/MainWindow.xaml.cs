@@ -1,21 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace LibraryApplication
 {
@@ -28,65 +20,126 @@ namespace LibraryApplication
         {
             InitializeComponent();
 
-            SerializeAllBooks(); // for testing purposes
+            // resets the books and customers // argument is true if you want to reset the books and customers ie. delete the existing ones
+            SerializeAllBooks(true);
+            serializeAllCustomers(true);
 
             SetLvBooksList(State.All);
+            setLvCustomersList();
         }
 
-        private Book currentBook = null;
+        private Book _currentBook = null;
+        private Customer _currentCustomer = null;
 
 
         private void SetLvBooksList(State state)
         {
-            List<Book> books = new List<Book>();
+            List<Book?> books = new List<Book?>();
 
             string root = @"C:\Users\lukas\RiderProjects\LibraryApplication\LibraryApplication\Books\";
 
             var files = from file in Directory.EnumerateFiles(root) select file;
 
-            if (state == State.All)
-            {
-                files = from file in Directory.EnumerateFiles(root) select file;
-            }
-            else if (state == State.Available)
-            {
-                files = from file in Directory.EnumerateFiles(root) where file.Contains("true") select file;
-            }
-            else if (state == State.Loaned)
-            {
-                files = from file in Directory.EnumerateFiles(root) where file.Contains("false") select file;
-            }
+
+            LvBooks.ItemsSource = null;
+
+            Console.WriteLine("SetLvBooksList");
+            Console.WriteLine("State: " + state);
+
 
             foreach (var file in files)
             {
                 string json = File.ReadAllText(file);
-                Book book = JsonSerializer.Deserialize<Book>(json);
+                Book? book = JsonSerializer.Deserialize<Book>(json);
+
 
                 books.Add(book);
             }
 
+            List<Book?>
+                books2 = new List<Book?>(); //this is a workaround to avoid the "Collection was modified; enumeration operation may not execute." error
+
             foreach (var book in books)
             {
-                Console.Out.WriteLine(book);
+                books2.Add(book);
             }
 
-            LvBooks.ItemsSource = books;
+            foreach (var book in books)
+            {
+                //would be faster to check the other way around but who cares
+                if (state == State.Available)
+                {
+                    if (book.IsAvailable == false)
+                    {
+                        books2.Remove(book);
+
+                        Console.WriteLine("Removed: " + book?.Title);
+                    }
+                }
+                else if (state == State.Loaned)
+                {
+                    Console.WriteLine("book.LoanedTo: " + book.LoanedTo);
+
+                    //could be nice to know who loaned the book
+
+                    if (book.IsAvailable)
+                    {
+                        books2.Remove(book);
+                    }
+                }
+            }
+
+            Console.WriteLine("books.Count: " + books2.Count);
+
+
+            LvBooks.ItemsSource = books2;
+        }
+
+
+        public void setLvCustomersList()
+        {
+            List<Customer?> customers = new List<Customer?>();
+
+            string root = @"C:\Users\lukas\RiderProjects\LibraryApplication\LibraryApplication\Customers\";
+
+            var files = from file in Directory.EnumerateFiles(root) select file;
+
+            foreach (var file in files)
+            {
+                string json = File.ReadAllText(file);
+                Customer? customer = JsonSerializer.Deserialize<Customer>(json);
+
+                customers.Add(customer);
+            }
+
+            LvCustomers.ItemsSource = customers;
+
+            CollectionView view = (CollectionView)CollectionViewSource.GetDefaultView(LvCustomers.ItemsSource);
+
+            view.SortDescriptions.Add(
+                new System.ComponentModel.SortDescription("Id", System.ComponentModel.ListSortDirection.Ascending));
         }
 
 
         private void CmbBooks_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            switch (CmbBooks.SelectedItem.ToString().Split(new string[] { ": " }, StringSplitOptions.None).Last())
+            string state = CmbBooks.SelectedItem.ToString().Split(new string[] { ": " }, StringSplitOptions.None)
+                .Last();
+
+            Console.WriteLine("CmbBooks_OnSelectionChanged");
+            Console.WriteLine("State: " + state);
+
+            if (state == "All Books")
             {
-                case "1":
-                    SetLvBooksList(State.All);
-                    break;
-                case "2":
-                    SetLvBooksList(State.Available);
-                    break;
-                case "3":
-                    Console.Out.WriteLine("3");
-                    break;
+                SetLvBooksList(State.All);
+            }
+            else if (state == "Available Books")
+            {
+                SetLvBooksList(State.Available);
+            }
+            else if (state == "Loaned to user")
+            {
+                SetLvBooksList(State.Loaned);
             }
         }
 
@@ -103,7 +156,7 @@ namespace LibraryApplication
             {
                 if (listView.SelectedItem is Book book)
                 {
-                    currentBook = book;
+                    _currentBook = book;
 
                     TxtBookTitle.Text = book.Title;
                     TxtBookAuthor.Text = book.Author;
@@ -116,9 +169,218 @@ namespace LibraryApplication
             }
         }
 
-
-        private void SerializeAllBooks()
+        private void LvCustomers_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            Customer customer = (Customer)LvCustomers.SelectedItem;
+
+            _currentCustomer = customer;
+        }
+
+
+        private void NewBookMenuItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            BookEditor bookEditor = new BookEditor(BookState.New, null, this);
+
+            bookEditor.ShowDialog();
+        }
+
+        private void EditBookMenuItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_currentBook == null)
+            {
+                MessageBox.Show("Please select a book first!");
+                return;
+            }
+
+            BookEditor bookEditor = new BookEditor(BookState.Edit, _currentBook, this);
+
+            bookEditor.ShowDialog();
+        }
+
+        private void DeleteBookMenuItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_currentBook == null)
+            {
+                MessageBox.Show("Please select a book first!");
+                return;
+            }
+
+            BookEditor bookEditor = new BookEditor(BookState.Delete, _currentBook, this);
+
+            bookEditor.ShowDialog();
+        }
+
+
+        //can't be assed to change the names
+        private void NewCustomerMenuItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            CustomerEditor bookEditor = new CustomerEditor(BookState.New, null, this);
+
+            bookEditor.ShowDialog();
+        }
+
+        private void EditCustomerMenuItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_currentCustomer == null)
+            {
+                MessageBox.Show("Please select a User first!");
+                return;
+            }
+
+            CustomerEditor bookEditor = new CustomerEditor(BookState.Edit, _currentCustomer, this);
+
+            bookEditor.ShowDialog();
+        }
+
+        private void DeleteCustomerMenuItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_currentCustomer == null)
+            {
+                MessageBox.Show("Please select a User first!");
+                return;
+            }
+
+            CustomerEditor bookEditor = new CustomerEditor(BookState.Delete, _currentCustomer, this);
+
+            bookEditor.ShowDialog();
+        }
+
+
+        private void BtnLoan_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_currentBook == null)
+            {
+                MessageBox.Show("Please select a book first!");
+                return;
+            }
+
+            if (_currentBook.IsAvailable == false)
+            {
+                MessageBox.Show("This book is already loaned!");
+                return;
+            }
+
+            if (_currentCustomer == null)
+            {
+                MessageBox.Show("Please select a customer first!");
+                return;
+            }
+
+            _currentBook.IsAvailable = false;
+
+            _currentBook.LoanedTo = _currentCustomer;
+
+
+            _currentBook.AddToLibrary();
+        }
+
+
+        private void BtnReturn_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_currentBook == null)
+            {
+                MessageBox.Show("Please select a book first!");
+                return;
+            }
+
+            if (_currentBook.IsAvailable)
+            {
+                MessageBox.Show("This book is already returned!");
+                return;
+            }
+
+            if (_currentBook.LoanedTo != _currentCustomer)
+            {
+                MessageBox.Show("This book is not loaned to this customer!");
+                return;
+            }
+
+            _currentBook.IsAvailable = true;
+
+            _currentBook.LoanedTo = null;
+
+
+            _currentBook.AddToLibrary();
+        }
+
+
+        public void OnEditorClosing(object? sender, CancelEventArgs e)
+        {
+            setLvCustomersList();
+
+
+            string state = CmbBooks.SelectedItem.ToString().Split(new string[] { ": " }, StringSplitOptions.None)
+                .Last();
+
+            if (state == "All Books")
+            {
+                SetLvBooksList(State.All);
+            }
+
+            if (state == "Available Books")
+            {
+                SetLvBooksList(State.Available);
+            }
+
+            if (state == "Loaned to user")
+            {
+                SetLvBooksList(State.Loaned);
+            }
+        }
+
+
+        private void serializeAllCustomers(bool reset)
+        {
+            if (reset == true)
+            {
+                //delete all customers
+
+                string root = @"C:\Users\lukas\RiderProjects\LibraryApplication\LibraryApplication\Customers\";
+
+                var files = from file in Directory.EnumerateFiles(root) select file;
+
+                foreach (var file in files)
+                {
+                    File.Delete(file);
+                }
+            }
+
+            ArrayList customers = new ArrayList();
+
+            Customer customer1 =
+                new Customer(1, "Lukas", "Holm", "RibeLandevej 20", "71352006", "lukasholm@hotmail.com", null);
+
+            Customer customer2 =
+                new Customer(2, "Jens", "Jensen", "Vej 1", "12345678", "JensJensen@Bajookiemail.com", null);
+
+
+            customers.Add(customer1);
+            customers.Add(customer2);
+
+            foreach (Customer customer in customers)
+            {
+                customer.serializeToJson();
+            }
+        }
+
+
+        private void SerializeAllBooks(bool reset)
+        {
+            if (reset == true)
+            {
+                //delete all boooooooooooks
+
+                string root = @"C:\Users\lukas\RiderProjects\LibraryApplication\LibraryApplication\Books\";
+
+                var files = from file in Directory.EnumerateFiles(root) select file;
+
+                foreach (var file in files)
+                {
+                    File.Delete(file);
+                }
+            }
+
+
             ArrayList itemsList = new ArrayList();
 
             Book book1 = new Book(1, "The Hobbit", "J.R.R. Tolkien", "Houghton Mifflin", 1937, "978-0-618-00221-1",
@@ -176,66 +438,6 @@ namespace LibraryApplication
             foreach (Book book in itemsList)
             {
                 book.AddToLibrary();
-            }
-        }
-
-
-        private void BtnAddBook_OnClick(object sender, RoutedEventArgs e)
-        {
-            Book book = new Book(1, "The Hobbit", "J.R.R. Tolkien", "Houghton Mifflin", 1937, "978-0-618-00221-1",
-                "The Hobbit, or There and Back Again is a children's fantasy novel by English author J. R. R. Tolkien. It was published on 21 September 1937 to wide critical acclaim, being nominated for the Carnegie Medal and awarded a prize from the New York Herald Tribune for best juvenile fiction.",
-                "Fantasy");
-            book.AddToLibrary();
-        }
-
-
-        private void NewBookMenuItem_OnClick(object sender, RoutedEventArgs e)
-        {
-            BookEditor bookEditor = new BookEditor(BookState.New, null);
-
-            bookEditor.ShowDialog();
-        }
-
-        private void EditBookMenuItem_OnClick(object sender, RoutedEventArgs e)
-        {
-            if (currentBook == null)
-            {
-                MessageBox.Show("Please select a book first!");
-                return;
-            }
-
-            BookEditor bookEditor = new BookEditor(BookState.Edit, currentBook);
-
-            bookEditor.ShowDialog();
-        }
-
-        private void DeleteBookMenuItem_OnClick(object sender, RoutedEventArgs e)
-        {
-            if (currentBook == null)
-            {
-                MessageBox.Show("Please select a book first!");
-                return;
-            }
-
-            //delete book.json file
-            string path = @"C:\Users\lukas\RiderProjects\LibraryApplication\LibraryApplication\Books\";
-            string fileName = currentBook.Title + ".json";
-            File.Delete(path + fileName);
-
-            //refresh listview
-            string state = CmbBooks.SelectedItem.ToString().Split(new string[] { ": " }, StringSplitOptions.None)
-                .Last();
-            if (state == "1")
-            {
-                SetLvBooksList(State.All);
-            }
-            else if (state == "2")
-            {
-                SetLvBooksList(State.Available);
-            }
-            else if (state == "3")
-            {
-                SetLvBooksList(State.Loaned);
             }
         }
     }
